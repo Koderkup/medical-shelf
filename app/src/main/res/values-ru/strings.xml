@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Информация о приложении -->
+    <string name="app_name">МедПолка</string>
+
+    <!-- Навигация -->
+    <string name="nav_intake">Приём</string>
+    <string name="nav_shelf">Аптечка</string>
+    <string name="nav_add">Добавить</string>
+    <string name="nav_settings">Настройки</string>
+
+    <!-- Общие кнопки и действия -->
+    <string name="btn_save">Сохранить</string>
+    <string name="btn_cancel">Отмена</string>
+    <string name="btn_delete">Удалить</string>
+    <string name="btn_edit">Редактировать</string>
+    <string name="btn_close">Закрыть</string>
+    <string name="btn_confirm">Подтвердить</string>
+    <string name="btn_undo">Отменить</string>
+    <string name="btn_copy_code">Скопировать код</string>
+    <string name="btn_activate">Активировать</string>
+    <string name="btn_checklist">Чек-лист сборки</string>
+
+    <!-- Шаблоны аптечек -->
+    <string name="box_template_home">Домашняя аптечка</string>
+    <string name="box_template_kids">Детская аптечка</string>
+    <string name="box_template_travel">Походная / В дорогу</string>
+    <string name="box_template_car">Автомобильная</string>
+    <string name="box_all_medicines">Все лекарства</string>
+    <string name="box_add_new">+ Новая аптечка</string>
+    <string name="box_total_count">Лекарств: %1$d</string>
+    <string name="dialog_new_box_title">Новая аптечка</string>
+    <string name="dialog_new_box_hint">Название аптечки</string>
+
+    <!-- Шаблоны чек-листа -->
+    <string name="checklist_antipyretic">Жаропонижающее и обезболивающее</string>
+    <string name="checklist_antiseptic">Антисептик и перевязка</string>
+    <string name="checklist_sorbents">Сорбенты и пищеварение</string>
+    <string name="checklist_allergy">Средство от аллергии</string>
+    <string name="checklist_thermometer">Термометр / Градусник</string>
+    <string name="checklist_burns">Средство от ожогов</string>
+    <string name="checklist_patch">Пластырь и стерильные салфетки</string>
+    <string name="checklist_motion_sickness">Средство от укачивания</string>
+    <string name="checklist_individual">Индивидуальные лекарства</string>
+    <string name="checklist_scissors">Ножницы и пинцет</string>
+    <string name="checklist_hint_in_home">(Есть в Домашней: %1$s)</string>
+    <string name="checklist_title">Чек-лист сборки: %1$s</string>
+    <string name="checklist_add_custom">Добавить пункт в чек-лист</string>
+
+    <!-- Сроки годности и запасы -->
+    <string name="status_expired">Просрочено</string>
+    <string name="status_expiring_soon">Истекает скоро</string>
+    <string name="status_good">Годен</string>
+    <string name="expiration_date">Срок годности</string>
+    <string name="opened_date">Дата вскрытия</string>
+    <string name="opened_on">Вскрыто: %1$s</string>
+    <string name="opened_expiry_period">Срок после вскрытия (дней)</string>
+    <string name="btn_open_today">Открыл сегодня</string>
+    <string name="effective_expiry">Годен до: %1$s</string>
+    <string name="quantity_left">Остаток: %1$d</string>
+    <string name="btn_decrement">-1 шт</string>
+    <string name="unit_pcs">шт.</string>
+
+    <!-- Приём и будильники -->
+    <string name="section_morning">Утро</string>
+    <string name="section_afternoon">День</string>
+    <string name="section_evening">Вечер</string>
+    <string name="section_night">Ночь</string>
+    <string name="btn_took_it">Выпил</string>
+    <string name="took_today_at">Принято сегодня в %1$s</string>
+    <string name="timer_before_food">До еды осталось: %1$s</string>
+    <string name="notification_food_ready_title">Можно завтракать!</string>
+    <string name="notification_food_ready_body">Время ожидания после приёма лекарства истекло.</string>
+    <string name="notification_alarm_title">Приём лекарства: %1$s</string>
+    <string name="notification_alarm_body">Дозировка: %1$s. Нажмите «Выпил» после приёма.</string>
+    <string name="btn_snooze_10">Отложить на 10 мин</string>
+    <string name="schedule_daily">Ежедневно</string>
+    <string name="schedule_every_n_days">Каждые %1$d дн.</string>
+    <string name="schedule_days_of_week">Выбранные дни недели</string>
+    <string name="schedule_course_duration">Длительность курса (дней)</string>
+    <string name="schedule_end_date">Окончание курса: %1$s</string>
+    <string name="alarm_loud_option">Громкий / настойчивый сигнал</string>
+
+    <!-- Сканер -->
+    <string name="scanner_title">Сканер камерой</string>
+    <string name="scanner_mode_barcode">Штрих-код / DataMatrix</string>
+    <string name="scanner_mode_ocr">Дата с коробки (OCR)</string>
+    <string name="scanner_scans_left">Осталось бесплатных сканирований: %1$d</string>
+    <string name="scanner_barcode_found">Найдено: %1$s</string>
+    <string name="scanner_ocr_found">Распознана дата: %1$s</string>
+    <string name="scanner_permission_required">Для сканирования требуется разрешение на использование камеры</string>
+
+    <!-- Добавление / Редактирование лекарства -->
+    <string name="add_med_title">Добавить лекарство</string>
+    <string name="edit_med_title">Редактировать лекарство</string>
+    <string name="field_name_label">Название лекарства *</string>
+    <string name="field_name_hint">Например, Парацетамол</string>
+    <string name="field_comment_label">Назначение / Комментарий</string>
+    <string name="field_comment_hint">Например, от головы, температура</string>
+    <string name="field_box_label">Аптечка</string>
+    <string name="field_quantity_label">Количество</string>
+    <string name="field_dosage_label">Дозировка</string>
+    <string name="photo_package_label">Фото упаковки</string>
+    <string name="btn_add_photo">Добавить фото</string>
+    <string name="btn_remove_photo">Удалить фото</string>
+
+    <!-- Перемещение / Дублирование -->
+    <string name="move_copy_title">Переместить или дублировать</string>
+    <string name="target_box_label">Целевая аптечка</string>
+    <string name="action_move">Переместить в аптечку</string>
+    <string name="action_copy">Дублировать в аптечку</string>
+
+    <!-- Настройки и Диагностика -->
+    <string name="settings_title">Настройки и лицензия</string>
+    <string name="license_status_free">Статус: Бесплатная версия</string>
+    <string name="license_status_pro">Статус: Активирована Pro-версия</string>
+    <string name="device_code_title">Код устройства:</string>
+    <string name="btn_activate_pro">Активировать Pro-версию</string>
+    <string name="expiry_notification_setting">Предупреждать о сроке за:</string>
+    <string name="days_7">7 дней</string>
+    <string name="days_14">14 дней</string>
+    <string name="days_30">30 дней</string>
+    <string name="backup_title">Офлайн-бэкап базы данных</string>
+    <string name="btn_export_backup">Экспорт бэкапа (JSON)</string>
+    <string name="btn_import_backup">Импорт бэкапа (JSON)</string>
+    <string name="backup_export_success">Бэкап успешно экспортирован</string>
+    <string name="backup_import_success">Бэкап успешно импортирован</string>
+    <string name="diagnostics_title">Диагностика будильников</string>
+    <string name="perm_notifications">Разрешение на уведомления</string>
+    <string name="perm_exact_alarm">Точные будильники</string>
+    <string name="perm_battery_opt">Оптимизация батареи</string>
+    <string name="btn_grant_perm">Разрешить</string>
+    <string name="battery_hint_huawei_xiaomi">На устройствах Huawei/Xiaomi разрешите автозапуск и отключите ограничения батареи для надежной работы будильников.</string>
+
+    <!-- Пэйволл и лицензирование -->
+    <string name="paywall_title">МедПолка Pro</string>
+    <string name="paywall_price">Полная версия навсегда — 299 ₽ (≈ 10 BYN / $3). Разовая покупка, без подписок и рекламы.</string>
+    <string name="paywall_device_code_desc">Укажите этот код устройства при покупке ключа:</string>
+    <string name="paywall_enter_key_hint">Введите ключ (MP-XXXX-XXXX)</string>
+    <string name="paywall_invalid_key">Неверный ключ для данного устройства!</string>
+    <string name="paywall_success">Лицензия успешно активирована!</string>
+    <string name="paywall_buy_online">Купить ключ на сайте</string>
+    <string name="pro_badge">PRO</string>
+    <string name="locked_pro_feature">Доступно в версии Pro</string>
+    <string name="free_limit_meds_reached">Достигнут лимит 8 лекарств в Free-версии. Перейдите на Pro для безлимита.</string>
+    <string name="free_scan_limit_reached">Лимит бесплатных сканирований исчерпан (3/3). Оформите Pro для безлимита.</string>
+    <string name="pro_feature_boxes">Неограниченно аптечек и лекарств</string>
+    <string name="pro_feature_checklists">Готовые чек-листы сборки аптечек</string>
+    <string name="pro_feature_scanner">Безлимитный сканер штрих-кодов и дат</string>
+    <string name="pro_feature_timer">Таймер до еды (30/45/60 мин)</string>
+    <string name="pro_feature_backup">Офлайн-бэкап базы данных (JSON)</string>
+    <string name="pro_feature_alarms">Неограниченные будильники</string>
+
+    <string name="search_hint">Поиск лекарства или примечания...</string>
+</resources>

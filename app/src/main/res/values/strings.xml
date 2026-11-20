@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App info -->
+    <string name="app_name">MedShelf</string>
+
+    <!-- Navigation -->
+    <string name="nav_intake">Intake</string>
+    <string name="nav_shelf">Medicine Shelf</string>
+    <string name="nav_add">Add</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- General Buttons & Actions -->
+    <string name="btn_save">Save</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_delete">Delete</string>
+    <string name="btn_edit">Edit</string>
+    <string name="btn_close">Close</string>
+    <string name="btn_confirm">Confirm</string>
+    <string name="btn_undo">Undo</string>
+    <string name="btn_copy_code">Copy Code</string>
+    <string name="btn_activate">Activate</string>
+    <string name="btn_checklist">Assembly Checklist</string>
+
+    <!-- Default Box Templates -->
+    <string name="box_template_home">Home Pharmacy</string>
+    <string name="box_template_kids">Children\'s Kit</string>
+    <string name="box_template_travel">Travel Kit</string>
+    <string name="box_template_car">Car First Aid Kit</string>
+    <string name="box_all_medicines">All Medicines</string>
+    <string name="box_add_new">+ New Box</string>
+    <string name="box_total_count">%1$d items</string>
+    <string name="dialog_new_box_title">New Medicine Box</string>
+    <string name="dialog_new_box_hint">Box Name</string>
+
+    <!-- Checklist Templates -->
+    <string name="checklist_antipyretic">Antipyretic &amp; Painkiller</string>
+    <string name="checklist_antiseptic">Antiseptic &amp; Bandages</string>
+    <string name="checklist_sorbents">Sorbents &amp; Digestion</string>
+    <string name="checklist_allergy">Allergy relief</string>
+    <string name="checklist_thermometer">Thermometer</string>
+    <string name="checklist_burns">Burn remedy</string>
+    <string name="checklist_patch">Plaster &amp; Wipes</string>
+    <string name="checklist_motion_sickness">Motion sickness remedy</string>
+    <string name="checklist_individual">Personal prescription meds</string>
+    <string name="checklist_scissors">Scissors &amp; Tweezers</string>
+    <string name="checklist_hint_in_home">(In Home Pharmacy: %1$s)</string>
+    <string name="checklist_title">Assembly Checklist: %1$s</string>
+    <string name="checklist_add_custom">Add Checklist Item</string>
+
+    <!-- Expiration & Inventory -->
+    <string name="status_expired">Expired</string>
+    <string name="status_expiring_soon">Expiring soon</string>
+    <string name="status_good">Good</string>
+    <string name="expiration_date">Expiration Date</string>
+    <string name="opened_date">Opening Date</string>
+    <string name="opened_on">Opened: %1$s</string>
+    <string name="opened_expiry_period">Valid after opening (days)</string>
+    <string name="btn_open_today">Opened today</string>
+    <string name="effective_expiry">Expiration: %1$s</string>
+    <string name="quantity_left">Remaining: %1$d</string>
+    <string name="btn_decrement">-1 dose</string>
+    <string name="unit_pcs">pcs</string>
+
+    <!-- Intake & Alarms -->
+    <string name="section_morning">Morning</string>
+    <string name="section_afternoon">Afternoon</string>
+    <string name="section_evening">Evening</string>
+    <string name="section_night">Night</string>
+    <string name="btn_took_it">Took it</string>
+    <string name="took_today_at">Taken today at %1$s</string>
+    <string name="timer_before_food">Before food: %1$s</string>
+    <string name="notification_food_ready_title">Time to eat!</string>
+    <string name="notification_food_ready_body">Before-food timer finished.</string>
+    <string name="notification_alarm_title">Take Medicine: %1$s</string>
+    <string name="notification_alarm_body">Dosage: %1$s. Press \'Took it\' when done.</string>
+    <string name="btn_snooze_10">Snooze 10 min</string>
+    <string name="schedule_daily">Daily</string>
+    <string name="schedule_every_n_days">Every %1$d days</string>
+    <string name="schedule_days_of_week">Specific days of week</string>
+    <string name="schedule_course_duration">Course duration (days)</string>
+    <string name="schedule_end_date">Course ends: %1$s</string>
+    <string name="alarm_loud_option">Loud &amp; persistent alarm</string>
+
+    <!-- Scanner -->
+    <string name="scanner_title">Camera Scanner</string>
+    <string name="scanner_mode_barcode">Barcode / DataMatrix</string>
+    <string name="scanner_mode_ocr">Expiration Date (OCR)</string>
+    <string name="scanner_scans_left">Free scans left: %1$d</string>
+    <string name="scanner_barcode_found">Found: %1$s</string>
+    <string name="scanner_ocr_found">Date recognized: %1$s</string>
+    <string name="scanner_permission_required">Camera permission is required for scanning</string>
+
+    <!-- Add / Edit Medicine -->
+    <string name="add_med_title">Add Medicine</string>
+    <string name="edit_med_title">Edit Medicine</string>
+    <string name="field_name_label">Medicine Name *</string>
+    <string name="field_name_hint">e.g. Paracetamol</string>
+    <string name="field_comment_label">Purpose / Comment</string>
+    <string name="field_comment_hint">e.g. For headache, fever</string>
+    <string name="field_box_label">Medicine Box</string>
+    <string name="field_quantity_label">Quantity</string>
+    <string name="field_dosage_label">Dosage</string>
+    <string name="photo_package_label">Package Photo</string>
+    <string name="btn_add_photo">Add Photo</string>
+    <string name="btn_remove_photo">Remove Photo</string>
+
+    <!-- Move / Copy -->
+    <string name="move_copy_title">Move / Copy Medicine</string>
+    <string name="target_box_label">Target Box</string>
+    <string name="action_move">Move to box</string>
+    <string name="action_copy">Copy to box</string>
+
+    <!-- Settings & Diagnostics -->
+    <string name="settings_title">Settings &amp; License</string>
+    <string name="license_status_free">Status: Free Version</string>
+    <string name="license_status_pro">Status: Pro Active</string>
+    <string name="device_code_title">Device Code:</string>
+    <string name="btn_activate_pro">Activate Pro Version</string>
+    <string name="expiry_notification_setting">Expiry warning before:</string>
+    <string name="days_7">7 days</string>
+    <string name="days_14">14 days</string>
+    <string name="days_30">30 days</string>
+    <string name="backup_title">Offline Data Backup</string>
+    <string name="btn_export_backup">Export Backup (JSON)</string>
+    <string name="btn_import_backup">Import Backup (JSON)</string>
+    <string name="backup_export_success">Backup exported successfully</string>
+    <string name="backup_import_success">Backup imported successfully</string>
+    <string name="diagnostics_title">Alarm &amp; Battery Diagnostics</string>
+    <string name="perm_notifications">Notifications Permission</string>
+    <string name="perm_exact_alarm">Exact Alarm Permission</string>
+    <string name="perm_battery_opt">Battery Optimization Exemption</string>
+    <string name="btn_grant_perm">Fix</string>
+    <string name="battery_hint_huawei_xiaomi">On Huawei/Xiaomi devices, allow autostart and disable battery restrictions to ensure timely alarms.</string>
+
+    <!-- Paywall & Licensing -->
+    <string name="paywall_title">MedShelf Pro</string>
+    <string name="paywall_price">Full version forever — 299 ₽ (≈ 10 BYN / $3). One-time purchase, no subscriptions or ads.</string>
+    <string name="paywall_device_code_desc">Give this Device Code when purchasing key:</string>
+    <string name="paywall_enter_key_hint">Enter license key (MP-XXXX-XXXX)</string>
+    <string name="paywall_invalid_key">Invalid key for this device code!</string>
+    <string name="paywall_success">License activated successfully!</string>
+    <string name="paywall_buy_online">Buy key on website</string>
+    <string name="pro_badge">PRO</string>
+    <string name="locked_pro_feature">This feature requires Pro version</string>
+    <string name="free_limit_meds_reached">Free limit reached (8/8 medicines). Upgrade to Pro for unlimited.</string>
+    <string name="free_scan_limit_reached">Free scan limit reached (3/3). Unlock unlimited scanning with Pro.</string>
+    <string name="pro_feature_boxes">Unlimited medicine boxes &amp; medicines</string>
+    <string name="pro_feature_checklists">Assembly checklists for travel, car &amp; kids</string>
+    <string name="pro_feature_scanner">Unlimited barcode &amp; date scanner</string>
+    <string name="pro_feature_timer">Before-food timer (30/45/60 min)</string>
+    <string name="pro_feature_backup">Offline JSON backup export &amp; import</string>
+    <string name="pro_feature_alarms">Unlimited smart alarms</string>
+
+    <string name="search_hint">Search medicine name or note...</string>
+</resources>
