@@ -45,6 +45,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.example.medical_shelf.R
 import com.example.medical_shelf.data.local.AppDatabase
 import com.example.medical_shelf.data.local.entity.BoxEntity
@@ -58,9 +60,6 @@ import kotlinx.coroutines.launch
 fun AddEditMedicineScreen(
     medicineId: Long? = null,
     defaultBoxId: Long? = null,
-    scannedBarcodeName: String? = null,
-    scannedDate: String? = null,
-    onNavigateToScanner: (mode: String) -> Unit,
     onOpenPaywall: () -> Unit,
     onDone: () -> Unit
 ) {
@@ -83,34 +82,13 @@ fun AddEditMedicineScreen(
     var photoUriString by remember { mutableStateOf<String?>(null) }
 
     var expandedBoxMenu by remember { mutableStateOf(false) }
+    var activeScannerMode by remember { mutableStateOf<String?>(null) } // null = closed, "barcode", "ocr"
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         if (uri != null) {
             photoUriString = uri.toString()
-        }
-    }
-
-    LaunchedEffect(scannedBarcodeName) {
-        if (!scannedBarcodeName.isNullOrBlank()) {
-            // Check if scannedBarcodeName is pure digits (barcode) or medicine name
-            if (scannedBarcodeName.all { it.isDigit() }) {
-                barcode = scannedBarcodeName
-                // Lookup if dictionary/cache has a name for this barcode
-                val cached = db.userBarcodeCacheDao().findNameByBarcode(scannedBarcodeName)
-                if (cached != null) {
-                    name = cached
-                }
-            } else {
-                name = scannedBarcodeName
-            }
-        }
-    }
-
-    LaunchedEffect(scannedDate) {
-        if (!scannedDate.isNullOrBlank()) {
-            expirationDate = scannedDate
         }
     }
 
@@ -162,13 +140,13 @@ fun AddEditMedicineScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Scanner Launch Buttons (Height 68dp for two-line text comfort)
+            // Scanner Launch Buttons (Equal Height 68dp)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 OutlinedButton(
-                    onClick = { onNavigateToScanner("barcode") },
+                    onClick = { activeScannerMode = "barcode" },
                     modifier = Modifier
                         .weight(1f)
                         .defaultMinSize(minHeight = 68.dp),
@@ -180,7 +158,7 @@ fun AddEditMedicineScreen(
                 }
 
                 OutlinedButton(
-                    onClick = { onNavigateToScanner("ocr") },
+                    onClick = { activeScannerMode = "ocr" },
                     modifier = Modifier
                         .weight(1f)
                         .defaultMinSize(minHeight = 68.dp),
@@ -327,7 +305,7 @@ fun AddEditMedicineScreen(
                                 )
                                 db.medicineDao().insertMedicine(medicine)
 
-                                // If user typed a barcode and name, save to cache
+                                // Save barcode -> name mapping to cache
                                 if (barcode.isNotBlank() && name.isNotBlank()) {
                                     db.userBarcodeCacheDao().insertOrReplace(
                                         com.example.medical_shelf.data.local.entity.UserBarcodeCacheEntity(
@@ -353,6 +331,34 @@ fun AddEditMedicineScreen(
                     fontWeight = FontWeight.Bold
                 )
             }
+        }
+    }
+
+    // In-Place Scanner Overlay Dialog
+    if (activeScannerMode != null) {
+        Dialog(
+            onDismissRequest = { activeScannerMode = null },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            ScannerScreen(
+                initialMode = activeScannerMode!!,
+                onOpenPaywall = {
+                    activeScannerMode = null
+                    onOpenPaywall()
+                },
+                onResultFound = { scannedBarcode, scannedName, scannedDate ->
+                    if (!scannedBarcode.isNullOrBlank()) {
+                        barcode = scannedBarcode
+                    }
+                    if (!scannedName.isNullOrBlank()) {
+                        name = scannedName
+                    }
+                    if (!scannedDate.isNullOrBlank()) {
+                        expirationDate = scannedDate
+                    }
+                    activeScannerMode = null
+                }
+            )
         }
     }
 }

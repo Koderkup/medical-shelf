@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
@@ -110,20 +109,9 @@ fun MainAppScreen() {
                 val medId = backStackEntry.arguments?.getLong("medId")
                 val boxId = backStackEntry.arguments?.getLong("boxId")
 
-                val scannedName by backStackEntry.savedStateHandle.getStateFlow<String?>("scanned_name", null).collectAsState()
-                val scannedBarcode by backStackEntry.savedStateHandle.getStateFlow<String?>("scanned_barcode", null).collectAsState()
-                val scannedDate by backStackEntry.savedStateHandle.getStateFlow<String?>("scanned_date", null).collectAsState()
-
-                val scannedBarcodeName = scannedName ?: scannedBarcode
-
                 AddEditMedicineScreen(
                     medicineId = if (medId != null && medId > 0) medId else null,
                     defaultBoxId = if (boxId != null && boxId > 0) boxId else null,
-                    scannedBarcodeName = scannedBarcodeName,
-                    scannedDate = scannedDate,
-                    onNavigateToScanner = { mode ->
-                        navController.navigate(Screen.Scanner.createRoute(mode))
-                    },
                     onOpenPaywall = { navController.navigate(Screen.Paywall.route) },
                     onDone = { navController.popBackStack() }
                 )
@@ -158,9 +146,6 @@ fun MainAppScreen() {
                     initialMode = mode,
                     onOpenPaywall = { navController.navigate(Screen.Paywall.route) },
                     onResultFound = { barcode, name, date ->
-                        navController.previousBackStackEntry?.savedStateHandle?.set("scanned_barcode", barcode)
-                        navController.previousBackStackEntry?.savedStateHandle?.set("scanned_name", name)
-                        navController.previousBackStackEntry?.savedStateHandle?.set("scanned_date", date)
                         navController.popBackStack()
                     }
                 )
