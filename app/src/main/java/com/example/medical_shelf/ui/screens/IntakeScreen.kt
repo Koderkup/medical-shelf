@@ -1,6 +1,7 @@
 package com.example.medical_shelf.ui.screens
 
 import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -192,10 +193,16 @@ fun IntakeScreen(
             onDismiss = { showAddScheduleDialog = false },
             onSave = { schedule ->
                 scope.launch {
-                    val id = db.scheduleDao().insertSchedule(schedule)
-                    val saved = schedule.copy(id = id)
-                    AlarmScheduler(context).scheduleAlarm(saved)
-                    showAddScheduleDialog = false
+                    try {
+                        val id = db.scheduleDao().insertSchedule(schedule)
+                        val saved = schedule.copy(id = id)
+                        AlarmScheduler(context).scheduleAlarm(saved)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        Toast.makeText(context, e.localizedMessage ?: "Error saving alarm", Toast.LENGTH_SHORT).show()
+                    } finally {
+                        showAddScheduleDialog = false
+                    }
                 }
             }
         )
@@ -233,7 +240,10 @@ fun AddScheduleDialog(
                     ) {
                         OutlinedTextField(
                             value = selectedMedicine?.name ?: customMedName,
-                            onValueChange = { customMedName = it },
+                            onValueChange = {
+                                customMedName = it
+                                selectedMedicine = null
+                            },
                             label = { Text(text = stringResource(id = R.string.field_name_label)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedMedMenu) },
                             modifier = Modifier

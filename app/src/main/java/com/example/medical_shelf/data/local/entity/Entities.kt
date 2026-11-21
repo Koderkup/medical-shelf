@@ -66,19 +66,11 @@ data class ChecklistItemEntity(
 
 @Entity(
     tableName = "schedules",
-    foreignKeys = [
-        ForeignKey(
-            entity = MedicineEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["medicineId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],
     indices = [Index(value = ["medicineId"])]
 )
 data class ScheduleEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val medicineId: Long,
+    val medicineId: Long = 0,
     val medicineName: String,
     val dosage: String? = null,
     val timeHour: Int,

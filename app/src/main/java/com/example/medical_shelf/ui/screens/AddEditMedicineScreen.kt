@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -72,12 +73,13 @@ fun AddEditMedicineScreen(
     val boxes by db.boxDao().getAllBoxes().collectAsState(initial = emptyList())
     val medicineCount by db.medicineDao().getMedicineCount().collectAsState(initial = 0)
 
-    var name by remember { mutableStateOf(scannedBarcodeName ?: "") }
+    var name by remember { mutableStateOf("") }
+    var barcode by remember { mutableStateOf("") }
     var comment by remember { mutableStateOf("") }
     var selectedBox by remember { mutableStateOf<BoxEntity?>(null) }
     var quantity by remember { mutableIntStateOf(1) }
     var dosage by remember { mutableStateOf("") }
-    var expirationDate by remember { mutableStateOf(scannedDate ?: "") }
+    var expirationDate by remember { mutableStateOf("") }
     var photoUriString by remember { mutableStateOf<String?>(null) }
 
     var expandedBoxMenu by remember { mutableStateOf(false) }
@@ -92,7 +94,17 @@ fun AddEditMedicineScreen(
 
     LaunchedEffect(scannedBarcodeName) {
         if (!scannedBarcodeName.isNullOrBlank()) {
-            name = scannedBarcodeName
+            // Check if scannedBarcodeName is pure digits (barcode) or medicine name
+            if (scannedBarcodeName.all { it.isDigit() }) {
+                barcode = scannedBarcodeName
+                // Lookup if dictionary/cache has a name for this barcode
+                val cached = db.userBarcodeCacheDao().findNameByBarcode(scannedBarcodeName)
+                if (cached != null) {
+                    name = cached
+                }
+            } else {
+                name = scannedBarcodeName
+            }
         }
     }
 
@@ -107,6 +119,7 @@ fun AddEditMedicineScreen(
             val existing = db.medicineDao().getMedicineByIdSync(medicineId)
             if (existing != null) {
                 name = existing.name
+                barcode = existing.barcode ?: ""
                 comment = existing.comment ?: ""
                 quantity = existing.quantity
                 dosage = existing.dosage ?: ""
@@ -149,7 +162,7 @@ fun AddEditMedicineScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Scanner Launch Buttons (Equal Height 52.dp)
+            // Scanner Launch Buttons (Height 68dp for two-line text comfort)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -158,24 +171,24 @@ fun AddEditMedicineScreen(
                     onClick = { onNavigateToScanner("barcode") },
                     modifier = Modifier
                         .weight(1f)
-                        .height(52.dp),
+                        .defaultMinSize(minHeight = 68.dp),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Icon(imageVector = Icons.Default.QrCodeScanner, contentDescription = null)
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = stringResource(id = R.string.scanner_mode_barcode), fontSize = 13.sp)
+                    Text(text = stringResource(id = R.string.scanner_mode_barcode), fontSize = 12.sp)
                 }
 
                 OutlinedButton(
                     onClick = { onNavigateToScanner("ocr") },
                     modifier = Modifier
                         .weight(1f)
-                        .height(52.dp),
+                        .defaultMinSize(minHeight = 68.dp),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Icon(imageVector = Icons.Default.CameraAlt, contentDescription = null)
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = stringResource(id = R.string.scanner_mode_ocr), fontSize = 13.sp)
+                    Text(text = stringResource(id = R.string.scanner_mode_ocr), fontSize = 12.sp)
                 }
             }
 
@@ -185,6 +198,16 @@ fun AddEditMedicineScreen(
                 onValueChange = { name = it },
                 label = { Text(text = stringResource(id = R.string.field_name_label)) },
                 placeholder = { Text(text = stringResource(id = R.string.field_name_hint)) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            )
+
+            // Optional Barcode field
+            OutlinedTextField(
+                value = barcode,
+                onValueChange = { barcode = it },
+                label = { Text(text = "Штрих-код (необязательно)") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -299,9 +322,21 @@ fun AddEditMedicineScreen(
                                     quantity = quantity,
                                     dosage = dosage.trim().ifBlank { null },
                                     expirationDate = expirationDate.trim().ifBlank { null },
+                                    barcode = barcode.trim().ifBlank { null },
                                     photoPath = photoUriString
                                 )
                                 db.medicineDao().insertMedicine(medicine)
+
+                                // If user typed a barcode and name, save to cache
+                                if (barcode.isNotBlank() && name.isNotBlank()) {
+                                    db.userBarcodeCacheDao().insertOrReplace(
+                                        com.example.medical_shelf.data.local.entity.UserBarcodeCacheEntity(
+                                            barcode = barcode.trim(),
+                                            medicineName = name.trim()
+                                        )
+                                    )
+                                }
+
                                 onDone()
                             }
                         }

@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -141,29 +142,47 @@ fun ScannerScreen(
                     }
                 }
 
-                // Mode Toggle
+                // Mode Toggle Buttons (Filled for Active Mode, Outlined for Inactive Mode)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    OutlinedButton(
-                        onClick = { scanMode = ScanMode.BARCODE },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        enabled = scanMode != ScanMode.BARCODE
-                    ) {
-                        Text(text = stringResource(id = R.string.scanner_mode_barcode))
+                    if (scanMode == ScanMode.BARCODE) {
+                        Button(
+                            onClick = { scanMode = ScanMode.BARCODE },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(text = stringResource(id = R.string.scanner_mode_barcode), fontWeight = FontWeight.Bold)
+                        }
+                    } else {
+                        OutlinedButton(
+                            onClick = { scanMode = ScanMode.BARCODE },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(text = stringResource(id = R.string.scanner_mode_barcode))
+                        }
                     }
 
-                    OutlinedButton(
-                        onClick = { scanMode = ScanMode.EXPIRATION_DATE_OCR },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        enabled = scanMode != ScanMode.EXPIRATION_DATE_OCR
-                    ) {
-                        Text(text = stringResource(id = R.string.scanner_mode_ocr))
+                    if (scanMode == ScanMode.EXPIRATION_DATE_OCR) {
+                        Button(
+                            onClick = { scanMode = ScanMode.EXPIRATION_DATE_OCR },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(text = stringResource(id = R.string.scanner_mode_ocr), fontWeight = FontWeight.Bold)
+                        }
+                    } else {
+                        OutlinedButton(
+                            onClick = { scanMode = ScanMode.EXPIRATION_DATE_OCR },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(text = stringResource(id = R.string.scanner_mode_ocr))
+                        }
                     }
                 }
 
