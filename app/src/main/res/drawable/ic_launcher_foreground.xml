@@ -3,8 +3,31 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Medical Cross & Shelf / Pill Icon -->
+
+    <!-- Outer pill shadow/base -->
+    <path
+        android:fillColor="#ECEFF1"
+        android:pathData="M54,24C37.43,24 24,37.43 24,54C24,70.57 37.43,84 54,84C70.57,84 84,70.57 84,54C84,37.43 70.57,24 54,24Z"/>
+
+    <!-- White round pill tablet body -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M54,24c-16.57,0 -30,13.43 -30,30s13.43,30 30,30 30,-13.43 30,-30 -13.43,-30 -30,-30zM59,61h-10v10h-10v-10h-10v-10h10v-10h10v10h10v10z"/>
+        android:pathData="M54,26C38.54,26 26,38.54 26,54C26,69.46 38.54,82 54,82C69.46,82 82,69.46 82,54C82,38.54 69.46,26 54,26Z"/>
+
+    <!-- Inner pill bevel / 3D shading edge -->
+    <path
+        android:fillColor="#E0F2F1"
+        android:pathData="M54,28C39.64,28 28,39.64 28,54C28,68.36 39.64,80 54,80C68.36,80 80,68.36 80,54C80,39.64 68.36,28 54,28ZM54,76C41.85,76 32,66.15 32,54C32,41.85 41.85,32 54,32C66.15,32 76,41.85 76,54C76,66.15 66.15,76 54,76Z"/>
+
+    <!-- Pill score line (groove down the middle for splitting in half) -->
+    <path
+        android:fillColor="#B2DFDB"
+        android:pathData="M52.5,28H55.5V80H52.5Z"/>
+
+    <!-- Red Medical Cross badge in the center -->
+    <!-- Horizontal & Vertical Red Cross bars -->
+    <path
+        android:fillColor="#E53935"
+        android:pathData="M49,41H59V49H67V59H59V67H49V59H41V49H49V41Z"/>
+
 </vector>
