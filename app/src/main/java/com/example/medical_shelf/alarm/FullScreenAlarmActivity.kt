@@ -40,7 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.medical_shelf.R
-import com.example.medical_shelf.ui.theme.MedicalshelfTheme
+import com.example.medical_shelf.ui.theme.MedicalShelfTheme
 
 class FullScreenAlarmActivity : ComponentActivity() {
 
@@ -66,7 +66,7 @@ class FullScreenAlarmActivity : ComponentActivity() {
         val dosage = intent.getStringExtra(AlarmReceiver.EXTRA_DOSAGE)
 
         setContent {
-            MedicalshelfTheme {
+            MedicalShelfTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.primaryContainer

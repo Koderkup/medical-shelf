@@ -25,14 +25,14 @@ import com.example.medical_shelf.ui.screens.PaywallScreen
 import com.example.medical_shelf.ui.screens.ScannerScreen
 import com.example.medical_shelf.ui.screens.SettingsScreen
 import com.example.medical_shelf.ui.screens.ShelfScreen
-import com.example.medical_shelf.ui.theme.MedicalshelfTheme
+import com.example.medical_shelf.ui.theme.MedicalShelfTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MedicalshelfTheme {
+            MedicalShelfTheme {
                 MainAppScreen()
             }
         }
