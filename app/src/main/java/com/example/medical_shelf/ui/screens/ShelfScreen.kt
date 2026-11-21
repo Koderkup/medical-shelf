@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.MedicalServices
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -35,6 +36,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -65,6 +67,10 @@ import com.example.medical_shelf.data.local.entity.BoxTemplate
 import com.example.medical_shelf.data.local.entity.MedicineEntity
 import com.example.medical_shelf.data.preferences.UserPreferencesRepository
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,6 +90,7 @@ fun ShelfScreen(
     var selectedBoxId by remember { mutableStateOf<Long?>(null) } // null = All
     var searchQuery by remember { mutableStateOf("") }
     var showNewBoxDialog by remember { mutableStateOf(false) }
+    var selectedDetailMedicine by remember { mutableStateOf<MedicineEntity?>(null) }
 
     val medicinesFlow = remember(selectedBoxId, searchQuery) {
         when {
@@ -193,6 +200,7 @@ fun ShelfScreen(
                 items(medicines, key = { it.id }) { medicine ->
                     MedicineCard(
                         medicine = medicine,
+                        onClick = { selectedDetailMedicine = medicine },
                         onDecrementQuantity = {
                             if (medicine.quantity > 0) {
                                 scope.launch {
@@ -210,6 +218,32 @@ fun ShelfScreen(
                 }
             }
         }
+    }
+
+    if (selectedDetailMedicine != null) {
+        val box = boxes.find { it.id == selectedDetailMedicine!!.boxId }
+        val boxName = box?.let {
+            if (it.template == BoxTemplate.CUSTOM && !it.customName.isNullOrBlank()) it.customName
+            else stringResource(id = it.template.titleResId)
+        } ?: ""
+
+        MedicineDetailDialog(
+            medicine = selectedDetailMedicine!!,
+            boxName = boxName,
+            onDismiss = { selectedDetailMedicine = null },
+            onEdit = {
+                val medId = selectedDetailMedicine!!.id
+                selectedDetailMedicine = null
+                onNavigateToAddMed(medId, selectedBoxId)
+            },
+            onDelete = {
+                val med = selectedDetailMedicine!!
+                selectedDetailMedicine = null
+                scope.launch {
+                    db.medicineDao().deleteMedicine(med)
+                }
+            }
+        )
     }
 
     if (showNewBoxDialog) {
@@ -296,6 +330,7 @@ fun BoxChip(
 @Composable
 fun MedicineCard(
     medicine: MedicineEntity,
+    onClick: () -> Unit,
     onDecrementQuantity: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit
@@ -304,123 +339,165 @@ fun MedicineCard(
 
     val effectiveStatus = remember(medicine) { getExpiryStatus(medicine) }
     val statusColor = when (effectiveStatus) {
-        ExpiryStatus.EXPIRED -> Color(0xFFD32F2F)
-        ExpiryStatus.EXPIRING_SOON -> Color(0xFFF57C00)
-        ExpiryStatus.GOOD -> Color(0xFF388E3C)
+        ExpiryStatus.EXPIRED -> Color(0xFFD32F2F) // RED
+        ExpiryStatus.EXPIRING_SOON -> Color(0xFFF57C00) // ORANGE
+        ExpiryStatus.GOOD -> Color(0xFF388E3C) // GREEN
+    }
+
+    val statusText = when (effectiveStatus) {
+        ExpiryStatus.EXPIRED -> stringResource(id = R.string.status_expired)
+        ExpiryStatus.EXPIRING_SOON -> stringResource(id = R.string.status_expiring_soon)
+        ExpiryStatus.GOOD -> stringResource(id = R.string.status_good)
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (effectiveStatus == ExpiryStatus.EXPIRED) Color(0xFFFFEBEE) else MaterialTheme.colorScheme.surface
+        )
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.padding(14.dp)
         ) {
-            // Package Photo / Default Icon
-            if (!medicine.photoPath.isNullOrBlank()) {
-                AsyncImage(
-                    model = Uri.parse(medicine.photoPath),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(RoundedCornerShape(12.dp)),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(MaterialTheme.colorScheme.primaryContainer),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.MedicalServices,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(
-                modifier = Modifier.weight(1f)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = medicine.name,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
-                if (!medicine.comment.isNullOrBlank()) {
-                    Text(
-                        text = medicine.comment,
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                // Package Photo / Default Icon
+                if (!medicine.photoPath.isNullOrBlank()) {
+                    AsyncImage(
+                        model = Uri.parse(medicine.photoPath),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clip(RoundedCornerShape(12.dp)),
+                        contentScale = ContentScale.Crop
                     )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.primaryContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MedicalServices,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.width(12.dp))
 
-                // Expiry Badge
-                if (!medicine.expirationDate.isNullOrBlank()) {
-                    Text(
-                        text = stringResource(id = R.string.effective_expiry, medicine.expirationDate),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = statusColor
-                    )
-                }
-
-                // Quantity & Decrement
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(top = 4.dp)
+                Column(
+                    modifier = Modifier.weight(1f)
                 ) {
                     Text(
-                        text = stringResource(id = R.string.quantity_left, medicine.quantity),
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium
+                        text = medicine.name,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                    if (!medicine.comment.isNullOrBlank()) {
+                        Text(
+                            text = medicine.comment,
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
 
-                    IconButton(
-                        onClick = onDecrementQuantity,
-                        modifier = Modifier.size(24.dp)
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // Expiration Badge (RED if expired!)
+                    if (!medicine.expirationDate.isNullOrBlank()) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "${stringResource(id = R.string.effective_expiry, medicine.expirationDate)} ($statusText)",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = statusColor
+                            )
+                        }
+                    }
+
+                    // Quantity & Decrement
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(top = 4.dp)
                     ) {
-                        Icon(imageVector = Icons.Default.Remove, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Text(
+                            text = stringResource(id = R.string.quantity_left, medicine.quantity),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        IconButton(
+                            onClick = onDecrementQuantity,
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(imageVector = Icons.Default.Remove, contentDescription = null, modifier = Modifier.size(16.dp))
+                        }
+                    }
+                }
+
+                Box {
+                    IconButton(onClick = { showMenu = true }) {
+                        Icon(imageVector = Icons.Default.MoreVert, contentDescription = null)
+                    }
+
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(text = stringResource(id = R.string.btn_edit)) },
+                            onClick = {
+                                showMenu = false
+                                onEdit()
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(text = stringResource(id = R.string.btn_delete)) },
+                            onClick = {
+                                showMenu = false
+                                onDelete()
+                            }
+                        )
                     }
                 }
             }
 
-            Box {
-                IconButton(onClick = { showMenu = true }) {
-                    Icon(imageVector = Icons.Default.MoreVert, contentDescription = null)
-                }
-
-                DropdownMenu(
-                    expanded = showMenu,
-                    onDismissRequest = { showMenu = false }
+            // Red Warning Banner if Expired!
+            if (effectiveStatus == ExpiryStatus.EXPIRED) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0xFFD32F2F))
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    DropdownMenuItem(
-                        text = { Text(text = stringResource(id = R.string.btn_edit)) },
-                        onClick = {
-                            showMenu = false
-                            onEdit()
-                        }
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
                     )
-                    DropdownMenuItem(
-                        text = { Text(text = stringResource(id = R.string.btn_delete)) },
-                        onClick = {
-                            showMenu = false
-                            onDelete()
-                        }
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = stringResource(id = R.string.warning_expired_msg),
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
@@ -428,10 +505,121 @@ fun MedicineCard(
     }
 }
 
+@Composable
+fun MedicineDetailDialog(
+    medicine: MedicineEntity,
+    boxName: String,
+    onDismiss: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
+) {
+    val effectiveStatus = getExpiryStatus(medicine)
+    val statusColor = when (effectiveStatus) {
+        ExpiryStatus.EXPIRED -> Color(0xFFD32F2F)
+        ExpiryStatus.EXPIRING_SOON -> Color(0xFFF57C00)
+        ExpiryStatus.GOOD -> Color(0xFF388E3C)
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = medicine.name,
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp
+            )
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                if (!medicine.photoPath.isNullOrBlank()) {
+                    AsyncImage(
+                        model = Uri.parse(medicine.photoPath),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(160.dp)
+                            .clip(RoundedCornerShape(12.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
+                if (!medicine.comment.isNullOrBlank()) {
+                    Text(
+                        text = "${stringResource(id = R.string.field_comment_label)}: ${medicine.comment}",
+                        fontSize = 14.sp
+                    )
+                }
+
+                Text(
+                    text = "${stringResource(id = R.string.field_box_label)}: $boxName",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
+
+                if (!medicine.dosage.isNullOrBlank()) {
+                    Text(
+                        text = "${stringResource(id = R.string.field_dosage_label)}: ${medicine.dosage}",
+                        fontSize = 14.sp
+                    )
+                }
+
+                Text(
+                    text = stringResource(id = R.string.quantity_left, medicine.quantity),
+                    fontSize = 14.sp
+                )
+
+                if (!medicine.expirationDate.isNullOrBlank()) {
+                    Text(
+                        text = stringResource(id = R.string.effective_expiry, medicine.expirationDate),
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = statusColor
+                    )
+                }
+
+                if (effectiveStatus == ExpiryStatus.EXPIRED) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFD32F2F)),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.warning_expired_msg),
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(10.dp)
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Row {
+                Button(onClick = onEdit) {
+                    Text(text = stringResource(id = R.string.btn_edit))
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                OutlinedButton(onClick = onDelete) {
+                    Text(text = stringResource(id = R.string.btn_delete), color = Color.Red)
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = stringResource(id = R.string.btn_close))
+            }
+        }
+    )
+}
+
 enum class ExpiryStatus { EXPIRED, EXPIRING_SOON, GOOD }
 
 fun getExpiryStatus(medicine: MedicineEntity): ExpiryStatus {
-    val expTime = medicine.expirationTimestamp ?: return ExpiryStatus.GOOD
+    val dateStr = medicine.expirationDate ?: return ExpiryStatus.GOOD
+    val expTime = parseExpirationStringToMillis(dateStr) ?: (medicine.expirationTimestamp ?: return ExpiryStatus.GOOD)
+
     val now = System.currentTimeMillis()
     val warningTime = now + (14L * 24 * 60 * 60 * 1000)
 
@@ -439,5 +627,42 @@ fun getExpiryStatus(medicine: MedicineEntity): ExpiryStatus {
         expTime < now -> ExpiryStatus.EXPIRED
         expTime <= warningTime -> ExpiryStatus.EXPIRING_SOON
         else -> ExpiryStatus.GOOD
+    }
+}
+
+fun parseExpirationStringToMillis(dateStr: String): Long? {
+    return try {
+        val parts = dateStr.split('.', '/', '-')
+        if (parts.size == 2) {
+            val month = parts[0].toIntOrNull() ?: return null
+            val year = parts[1].toIntOrNull() ?: return null
+            val cal = Calendar.getInstance().apply {
+                set(Calendar.YEAR, year)
+                set(Calendar.MONTH, month - 1)
+                set(Calendar.DAY_OF_MONTH, 1)
+                set(Calendar.HOUR_OF_DAY, 23)
+                set(Calendar.MINUTE, 59)
+                set(Calendar.SECOND, 59)
+            }
+            // Set to end of month
+            cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH))
+            cal.timeInMillis
+        } else if (parts.size == 3) {
+            val day = parts[0].toIntOrNull() ?: return null
+            val month = parts[1].toIntOrNull() ?: return null
+            val year = parts[2].toIntOrNull() ?: return null
+            val cal = Calendar.getInstance().apply {
+                set(Calendar.YEAR, year)
+                set(Calendar.MONTH, month - 1)
+                set(Calendar.DAY_OF_MONTH, day)
+                set(Calendar.HOUR_OF_DAY, 23)
+                set(Calendar.MINUTE, 59)
+            }
+            cal.timeInMillis
+        } else {
+            null
+        }
+    } catch (e: Exception) {
+        null
     }
 }

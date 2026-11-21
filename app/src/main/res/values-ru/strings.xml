@@ -60,6 +60,9 @@
     <string name="quantity_left">Остаток: %1$d</string>
     <string name="btn_decrement">-1 шт</string>
     <string name="unit_pcs">шт.</string>
+    <string name="warning_expired_msg">ВНИМАНИЕ: Лекарство ПРОСРОЧЕНО! Не принимайте его!</string>
+    <string name="warning_expiring_soon_msg">ВНИМАНИЕ: Срок годности истекает скоро!</string>
+    <string name="detail_title">Карточка лекарства</string>
 
     <!-- Приём и будильники -->
     <string name="section_morning">Утро</string>

@@ -60,6 +60,9 @@
     <string name="quantity_left">Remaining: %1$d</string>
     <string name="btn_decrement">-1 dose</string>
     <string name="unit_pcs">pcs</string>
+    <string name="warning_expired_msg">WARNING: Medicine is EXPIRED! Do not take it.</string>
+    <string name="warning_expiring_soon_msg">WARNING: Expiration date is ending soon.</string>
+    <string name="detail_title">Medicine Details</string>
 
     <!-- Intake & Alarms -->
     <string name="section_morning">Morning</string>
