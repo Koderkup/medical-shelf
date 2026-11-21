@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,7 +24,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -40,16 +38,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import com.example.medical_shelf.R
 import com.example.medical_shelf.data.local.AppDatabase
 import com.example.medical_shelf.data.local.entity.BoxEntity
@@ -62,6 +56,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun AddEditMedicineScreen(
     medicineId: Long? = null,
+    defaultBoxId: Long? = null,
+    scannedBarcodeName: String? = null,
+    scannedDate: String? = null,
     onNavigateToScanner: (mode: String) -> Unit,
     onOpenPaywall: () -> Unit,
     onDone: () -> Unit
@@ -75,12 +72,12 @@ fun AddEditMedicineScreen(
     val boxes by db.boxDao().getAllBoxes().collectAsState(initial = emptyList())
     val medicineCount by db.medicineDao().getMedicineCount().collectAsState(initial = 0)
 
-    var name by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf(scannedBarcodeName ?: "") }
     var comment by remember { mutableStateOf("") }
     var selectedBox by remember { mutableStateOf<BoxEntity?>(null) }
     var quantity by remember { mutableIntStateOf(1) }
     var dosage by remember { mutableStateOf("") }
-    var expirationDate by remember { mutableStateOf("") }
+    var expirationDate by remember { mutableStateOf(scannedDate ?: "") }
     var photoUriString by remember { mutableStateOf<String?>(null) }
 
     var expandedBoxMenu by remember { mutableStateOf(false) }
@@ -90,6 +87,18 @@ fun AddEditMedicineScreen(
     ) { uri: Uri? ->
         if (uri != null) {
             photoUriString = uri.toString()
+        }
+    }
+
+    LaunchedEffect(scannedBarcodeName) {
+        if (!scannedBarcodeName.isNullOrBlank()) {
+            name = scannedBarcodeName
+        }
+    }
+
+    LaunchedEffect(scannedDate) {
+        if (!scannedDate.isNullOrBlank()) {
+            expirationDate = scannedDate
         }
     }
 
@@ -103,13 +112,18 @@ fun AddEditMedicineScreen(
                 dosage = existing.dosage ?: ""
                 expirationDate = existing.expirationDate ?: ""
                 photoUriString = existing.photoPath
+                selectedBox = boxes.find { it.id == existing.boxId }
             }
         }
     }
 
-    LaunchedEffect(boxes) {
+    LaunchedEffect(boxes, defaultBoxId) {
         if (selectedBox == null && boxes.isNotEmpty()) {
-            selectedBox = boxes.find { it.template == BoxTemplate.HOME } ?: boxes.first()
+            selectedBox = if (defaultBoxId != null && defaultBoxId > 0) {
+                boxes.find { it.id == defaultBoxId } ?: boxes.first()
+            } else {
+                boxes.find { it.template == BoxTemplate.HOME } ?: boxes.first()
+            }
         }
     }
 
@@ -263,45 +277,6 @@ fun AddEditMedicineScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             )
-
-            // Photo Selector
-            Column(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = stringResource(id = R.string.photo_package_label),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    if (photoUriString != null) {
-                        AsyncImage(
-                            model = Uri.parse(photoUriString),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(64.dp)
-                                .clip(RoundedCornerShape(12.dp)),
-                            contentScale = ContentScale.Crop
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                    }
-
-                    OutlinedButton(
-                        onClick = { photoPickerLauncher.launch("image/*") },
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Icon(imageVector = Icons.Default.CameraAlt, contentDescription = null)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(text = stringResource(id = R.string.btn_add_photo))
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             // Save Button with Freemium check
             Button(

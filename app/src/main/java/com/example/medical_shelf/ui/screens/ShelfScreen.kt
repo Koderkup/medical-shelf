@@ -65,12 +65,11 @@ import com.example.medical_shelf.data.local.entity.BoxTemplate
 import com.example.medical_shelf.data.local.entity.MedicineEntity
 import com.example.medical_shelf.data.preferences.UserPreferencesRepository
 import kotlinx.coroutines.launch
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShelfScreen(
-    onNavigateToAddMed: (Long?) -> Unit,
+    onNavigateToAddMed: (medId: Long?, boxId: Long?) -> Unit,
     onNavigateToChecklist: (Long) -> Unit,
     onOpenPaywall: () -> Unit
 ) {
@@ -201,7 +200,7 @@ fun ShelfScreen(
                                 }
                             }
                         },
-                        onEdit = { onNavigateToAddMed(medicine.id) },
+                        onEdit = { onNavigateToAddMed(medicine.id, selectedBoxId) },
                         onDelete = {
                             scope.launch {
                                 db.medicineDao().deleteMedicine(medicine)

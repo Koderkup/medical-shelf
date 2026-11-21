@@ -1,11 +1,12 @@
 package com.example.medical_shelf.ui.screens
 
-import android.content.ClipData
-import android.content.ClipboardManager
+import android.app.AlarmManager
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.os.PowerManager
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -26,17 +27,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BatteryAlert
-import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -50,7 +51,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -60,7 +60,6 @@ import androidx.compose.ui.unit.sp
 import com.example.medical_shelf.R
 import com.example.medical_shelf.data.preferences.UserPreferencesRepository
 import com.example.medical_shelf.data.repository.BackupRepository
-import com.example.medical_shelf.domain.licensing.LicenseManager
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -75,7 +74,6 @@ fun SettingsScreen(
 
     val isPro by prefs.isProVersion.collectAsState(initial = false)
     val expiryDays by prefs.expiryWarningDays.collectAsState(initial = 14)
-    val deviceCode = remember { LicenseManager.getDeviceCode(context) }
 
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json")
@@ -101,6 +99,19 @@ fun SettingsScreen(
         }
     }
 
+    // Permission / Diagnostics Checks
+    val notifManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    val alarmsManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+
+    val isNotificationsGranted = notifManager.areNotificationsEnabled()
+    val isExactAlarmGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        alarmsManager.canScheduleExactAlarms()
+    } else true
+    val isBatteryOptExempt = powerManager.isIgnoringBatteryOptimizations(context.packageName)
+
+    val allDiagnosticsOk = isNotificationsGranted && isExactAlarmGranted && isBatteryOptExempt
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -119,7 +130,10 @@ fun SettingsScreen(
             // License Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isPro) Color(0xFFE8F5E9) else MaterialTheme.colorScheme.surfaceVariant
+                )
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -129,41 +143,17 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Star,
+                            imageVector = if (isPro) Icons.Default.CheckCircle else Icons.Default.Star,
                             contentDescription = null,
-                            tint = if (isPro) Color(0xFFFFD700) else MaterialTheme.colorScheme.outline
+                            tint = if (isPro) Color(0xFF2E7D32) else MaterialTheme.colorScheme.primary
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = if (isPro) stringResource(id = R.string.license_status_pro) else stringResource(id = R.string.license_status_free),
                             fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = if (isPro) Color(0xFF2E7D32) else MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                    }
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "${stringResource(id = R.string.device_code_title)} $deviceCode",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                        IconButton(
-                            onClick = {
-                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                clipboard.setPrimaryClip(ClipData.newPlainText("Device Code", deviceCode))
-                                Toast.makeText(context, context.getString(R.string.btn_copy_code), Toast.LENGTH_SHORT).show()
-                            }
-                        ) {
-                            Icon(imageVector = Icons.Default.ContentCopy, contentDescription = null)
-                        }
                     }
 
                     if (!isPro) {
@@ -271,49 +261,52 @@ fun SettingsScreen(
                 }
             }
 
-            // Diagnostics & Permissions
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+            // Diagnostics & Permissions (Only shown if at least one permission is NOT granted!)
+            if (!allDiagnosticsOk) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
-                    Text(
-                        text = stringResource(id = R.string.diagnostics_title),
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.diagnostics_title),
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
+                        )
 
-                    // Notification & Battery intents
-                    DiagnosticItem(
-                        icon = Icons.Default.Notifications,
-                        title = stringResource(id = R.string.perm_notifications),
-                        onFix = {
-                            val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                                putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-                            }
-                            context.startActivity(intent)
+                        if (!isNotificationsGranted) {
+                            DiagnosticItem(
+                                icon = Icons.Default.Notifications,
+                                title = stringResource(id = R.string.perm_notifications),
+                                onFix = {
+                                    val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                                        putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                                    }
+                                    context.startActivity(intent)
+                                }
+                            )
                         }
-                    )
 
-                    DiagnosticItem(
-                        icon = Icons.Default.BatteryAlert,
-                        title = stringResource(id = R.string.perm_battery_opt),
-                        onFix = {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
-                                context.startActivity(intent)
-                            }
+                        if (!isBatteryOptExempt) {
+                            DiagnosticItem(
+                                icon = Icons.Default.BatteryAlert,
+                                title = stringResource(id = R.string.perm_battery_opt),
+                                onFix = {
+                                    val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                                    context.startActivity(intent)
+                                }
+                            )
                         }
-                    )
 
-                    Text(
-                        text = stringResource(id = R.string.battery_hint_huawei_xiaomi),
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                        Text(
+                            text = stringResource(id = R.string.battery_hint_huawei_xiaomi),
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         }
@@ -331,13 +324,22 @@ fun DiagnosticItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Text(text = title, fontSize = 14.sp)
         }
-        TextButton(onClick = onFix) {
-            Text(text = stringResource(id = R.string.btn_grant_perm))
+        TextButton(
+            onClick = onFix
+        ) {
+            Text(
+                text = stringResource(id = R.string.btn_grant_perm),
+                maxLines = 1,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }

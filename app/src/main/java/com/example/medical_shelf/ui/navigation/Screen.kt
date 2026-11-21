@@ -3,9 +3,11 @@ package com.example.medical_shelf.ui.navigation
 sealed class Screen(val route: String) {
     object Intake : Screen("intake")
     object Shelf : Screen("shelf")
-    object AddMedicine : Screen("add_medicine?medId={medId}") {
-        fun createRoute(medId: Long? = null): String {
-            return if (medId != null && medId > 0) "add_medicine?medId=$medId" else "add_medicine"
+    object AddMedicine : Screen("add_medicine?medId={medId}&boxId={boxId}") {
+        fun createRoute(medId: Long? = null, boxId: Long? = null): String {
+            val med = medId ?: -1L
+            val box = boxId ?: -1L
+            return "add_medicine?medId=$med&boxId=$box"
         }
     }
     object Settings : Screen("settings")

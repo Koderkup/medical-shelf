@@ -1,7 +1,6 @@
 package com.example.medical_shelf.ui.screens
 
 import android.content.Intent
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,22 +19,29 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -50,10 +56,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.medical_shelf.R
 import com.example.medical_shelf.alarm.AlarmReceiver
+import com.example.medical_shelf.alarm.AlarmScheduler
 import com.example.medical_shelf.data.local.AppDatabase
 import com.example.medical_shelf.data.local.entity.IntakeLogEntity
 import com.example.medical_shelf.data.local.entity.IntakeTimeSection
+import com.example.medical_shelf.data.local.entity.MedicineEntity
 import com.example.medical_shelf.data.local.entity.ScheduleEntity
+import com.example.medical_shelf.data.local.entity.ScheduleType
 import com.example.medical_shelf.data.preferences.UserPreferencesRepository
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -71,7 +80,8 @@ fun IntakeScreen(
     val prefs = remember { UserPreferencesRepository(context) }
 
     val isPro by prefs.isProVersion.collectAsState(initial = false)
-    val schedules by db.scheduleDao().getEnabledSchedules().collectAsState(initial = emptyList())
+    val schedules by db.scheduleDao().getAllSchedules().collectAsState(initial = emptyList())
+    val medicines by db.medicineDao().getAllMedicines().collectAsState(initial = emptyList())
 
     val todayStr = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()) }
     val logs by db.intakeLogDao().getLogsForDate(todayStr).collectAsState(initial = emptyList())
@@ -162,7 +172,9 @@ fun IntakeScreen(
                             imageVector = Icons.Default.Schedule,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.outline,
-                            modifier = Modifier.padding(bottom = 12.dp)
+                            modifier = Modifier
+                                .padding(bottom = 12.dp)
+                                .height(48.dp)
                         )
                         Text(
                             text = stringResource(id = R.string.nav_intake),
@@ -174,6 +186,160 @@ fun IntakeScreen(
             }
         }
     }
+
+    if (showAddScheduleDialog) {
+        AddScheduleDialog(
+            medicines = medicines,
+            onDismiss = { showAddScheduleDialog = false },
+            onSave = { schedule ->
+                scope.launch {
+                    val id = db.scheduleDao().insertSchedule(schedule)
+                    val saved = schedule.copy(id = id)
+                    AlarmScheduler(context).scheduleAlarm(saved)
+                    showAddScheduleDialog = false
+                }
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddScheduleDialog(
+    medicines: List<MedicineEntity>,
+    onDismiss: () -> Unit,
+    onSave: (ScheduleEntity) -> Unit
+) {
+    var selectedMedicine by remember { mutableStateOf<MedicineEntity?>(medicines.firstOrNull()) }
+    var customMedName by remember { mutableStateOf("") }
+    var dosage by remember { mutableStateOf("") }
+    var hour by remember { mutableIntStateOf(8) }
+    var minute by remember { mutableIntStateOf(0) }
+    var isLoudAlarm by remember { mutableStateOf(true) }
+    var expandedMedMenu by remember { mutableStateOf(false) }
+
+    val medName = selectedMedicine?.name ?: customMedName
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = stringResource(id = R.string.notification_alarm_title, "")) },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                if (medicines.isNotEmpty()) {
+                    ExposedDropdownMenuBox(
+                        expanded = expandedMedMenu,
+                        onExpandedChange = { expandedMedMenu = !expandedMedMenu }
+                    ) {
+                        OutlinedTextField(
+                            value = selectedMedicine?.name ?: customMedName,
+                            onValueChange = { customMedName = it },
+                            label = { Text(text = stringResource(id = R.string.field_name_label)) },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedMedMenu) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor(),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+
+                        ExposedDropdownMenu(
+                            expanded = expandedMedMenu,
+                            onDismissRequest = { expandedMedMenu = false }
+                        ) {
+                            medicines.forEach { med ->
+                                DropdownMenuItem(
+                                    text = { Text(text = med.name) },
+                                    onClick = {
+                                        selectedMedicine = med
+                                        dosage = med.dosage ?: ""
+                                        expandedMedMenu = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    OutlinedTextField(
+                        value = customMedName,
+                        onValueChange = { customMedName = it },
+                        label = { Text(text = stringResource(id = R.string.field_name_label)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                OutlinedTextField(
+                    value = dosage,
+                    onValueChange = { dosage = it },
+                    label = { Text(text = stringResource(id = R.string.field_dosage_label)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // Time picker fields
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = hour.toString(),
+                        onValueChange = { hour = (it.toIntOrNull() ?: 8).coerceIn(0, 23) },
+                        label = { Text(text = "Ч") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    OutlinedTextField(
+                        value = minute.toString(),
+                        onValueChange = { minute = (it.toIntOrNull() ?: 0).coerceIn(0, 59) },
+                        label = { Text(text = "М") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = stringResource(id = R.string.alarm_loud_option), fontSize = 14.sp)
+                    Switch(
+                        checked = isLoudAlarm,
+                        onCheckedChange = { isLoudAlarm = it }
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (medName.isNotBlank()) {
+                        val schedule = ScheduleEntity(
+                            medicineId = selectedMedicine?.id ?: 0L,
+                            medicineName = medName,
+                            dosage = dosage.ifBlank { null },
+                            timeHour = hour,
+                            timeMinute = minute,
+                            section = IntakeTimeSection.fromHour(hour),
+                            scheduleType = ScheduleType.DAILY,
+                            isLoudAlarm = isLoudAlarm,
+                            isEnabled = true
+                        )
+                        onSave(schedule)
+                    }
+                }
+            ) {
+                Text(text = stringResource(id = R.string.btn_save))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = stringResource(id = R.string.btn_cancel))
+            }
+        }
+    )
 }
 
 @Composable

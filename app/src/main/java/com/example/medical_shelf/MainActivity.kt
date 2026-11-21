@@ -83,8 +83,8 @@ fun MainAppScreen() {
 
             composable(Screen.Shelf.route) {
                 ShelfScreen(
-                    onNavigateToAddMed = { medId ->
-                        navController.navigate(Screen.AddMedicine.createRoute(medId))
+                    onNavigateToAddMed = { medId, boxId ->
+                        navController.navigate(Screen.AddMedicine.createRoute(medId, boxId))
                     },
                     onNavigateToChecklist = { boxId ->
                         navController.navigate(Screen.Checklist.createRoute(boxId))
@@ -95,14 +95,29 @@ fun MainAppScreen() {
 
             composable(
                 route = Screen.AddMedicine.route,
-                arguments = listOf(navArgument("medId") {
-                    type = NavType.LongType
-                    defaultValue = -1L
-                })
+                arguments = listOf(
+                    navArgument("medId") {
+                        type = NavType.LongType
+                        defaultValue = -1L
+                    },
+                    navArgument("boxId") {
+                        type = NavType.LongType
+                        defaultValue = -1L
+                    }
+                )
             ) { backStackEntry ->
                 val medId = backStackEntry.arguments?.getLong("medId")
+                val boxId = backStackEntry.arguments?.getLong("boxId")
+
+                val scannedBarcodeName = backStackEntry.savedStateHandle.get<String>("scanned_name")
+                    ?: backStackEntry.savedStateHandle.get<String>("scanned_barcode")
+                val scannedDate = backStackEntry.savedStateHandle.get<String>("scanned_date")
+
                 AddEditMedicineScreen(
                     medicineId = if (medId != null && medId > 0) medId else null,
+                    defaultBoxId = if (boxId != null && boxId > 0) boxId else null,
+                    scannedBarcodeName = scannedBarcodeName,
+                    scannedDate = scannedDate,
                     onNavigateToScanner = { mode ->
                         navController.navigate(Screen.Scanner.createRoute(mode))
                     },
@@ -140,6 +155,9 @@ fun MainAppScreen() {
                     initialMode = mode,
                     onOpenPaywall = { navController.navigate(Screen.Paywall.route) },
                     onResultFound = { barcode, name, date ->
+                        navController.previousBackStackEntry?.savedStateHandle?.set("scanned_barcode", barcode)
+                        navController.previousBackStackEntry?.savedStateHandle?.set("scanned_name", name)
+                        navController.previousBackStackEntry?.savedStateHandle?.set("scanned_date", date)
                         navController.popBackStack()
                     }
                 )
