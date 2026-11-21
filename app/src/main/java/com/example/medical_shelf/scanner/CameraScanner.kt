@@ -107,6 +107,10 @@ class ExpirationDateOcrAnalyzer(
         Pattern.compile("""\b(20\d{2})[-.](0[1-9]|1[0-2])\b""") // YYYY-MM
     )
 
+    private val expiryKeywords = listOf(
+        "ГОДЕН", "ГОДНОСТИ", "ДО", "ИСП", "EXP", "EXPIRY", "EXPIRATION", "BEST", "BEFORE", "USE"
+    )
+
     @OptIn(ExperimentalGetImage::class)
     override fun analyze(imageProxy: ImageProxy) {
         val mediaImage = imageProxy.image
@@ -123,7 +127,7 @@ class ExpirationDateOcrAnalyzer(
                 if (!hasFoundResult) {
                     val fullText = textResult.text
                     if (fullText.isNotBlank()) {
-                        val extractedDate = findDateInText(fullText)
+                        val extractedDate = findExpirationDateInText(fullText)
                         if (extractedDate != null) {
                             hasFoundResult = true
                             CoroutineScope(Dispatchers.Main).launch {
@@ -139,7 +143,38 @@ class ExpirationDateOcrAnalyzer(
             }
     }
 
-    private fun findDateInText(text: String): String? {
+    private fun findExpirationDateInText(text: String): String? {
+        val lines = text.lines()
+
+        // 1. Priority search: Look for lines that contain an expiration keyword AND a date
+        for (line in lines) {
+            val upperLine = line.uppercase()
+            if (expiryKeywords.any { upperLine.contains(it) }) {
+                val dateInLine = extractDateFromSingleText(line)
+                if (dateInLine != null) {
+                    return dateInLine
+                }
+            }
+        }
+
+        // 2. Secondary search: Find all dates in full text and pick the latest/future date
+        val allDates = mutableListOf<String>()
+        for (line in lines) {
+            val dateInLine = extractDateFromSingleText(line)
+            if (dateInLine != null) {
+                allDates.add(dateInLine)
+            }
+        }
+
+        if (allDates.isNotEmpty()) {
+            // Sort dates to pick the latest (farthest future) date
+            return allDates.maxByOrNull { parseDateSortKey(it) }
+        }
+
+        return null
+    }
+
+    private fun extractDateFromSingleText(text: String): String? {
         for (pattern in datePatterns) {
             val matcher = pattern.matcher(text)
             if (matcher.find()) {
@@ -150,6 +185,21 @@ class ExpirationDateOcrAnalyzer(
             }
         }
         return null
+    }
+
+    private fun parseDateSortKey(dateStr: String): Long {
+        return try {
+            val parts = dateStr.split('.')
+            if (parts.size == 2) {
+                val month = parts[0].toLongOrNull() ?: 1L
+                val year = parts[1].toLongOrNull() ?: 2000L
+                year * 100 + month
+            } else {
+                0L
+            }
+        } catch (e: Exception) {
+            0L
+        }
     }
 
     private fun formatStandardDate(rawDate: String): String {

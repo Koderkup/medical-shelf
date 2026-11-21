@@ -2,7 +2,9 @@ package com.example.medical_shelf.ui.screens
 
 import android.content.Intent
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Schedule
@@ -25,12 +28,12 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -209,7 +212,6 @@ fun IntakeScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddScheduleDialog(
     medicines: List<MedicineEntity>,
@@ -218,26 +220,25 @@ fun AddScheduleDialog(
 ) {
     var selectedMedicine by remember { mutableStateOf<MedicineEntity?>(medicines.firstOrNull()) }
     var customMedName by remember { mutableStateOf("") }
-    var dosage by remember { mutableStateOf("") }
+    var dosage by remember { mutableStateOf(medicines.firstOrNull()?.dosage ?: "") }
     var hourText by remember { mutableStateOf("08") }
     var minuteText by remember { mutableStateOf("00") }
     var isLoudAlarm by remember { mutableStateOf(true) }
-    var expandedMedMenu by remember { mutableStateOf(false) }
+    var expandedDropdown by remember { mutableStateOf(false) }
 
-    val medName = selectedMedicine?.name ?: customMedName
+    val finalMedName = selectedMedicine?.name ?: customMedName.trim()
+    val isSaveEnabled = finalMedName.isNotBlank()
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(text = stringResource(id = R.string.notification_alarm_title, "")) },
+        title = { Text(text = "Добавить будильник приёма") },
         text = {
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                // Name selection or typing
                 if (medicines.isNotEmpty()) {
-                    ExposedDropdownMenuBox(
-                        expanded = expandedMedMenu,
-                        onExpandedChange = { expandedMedMenu = !expandedMedMenu }
-                    ) {
+                    Box(modifier = Modifier.fillMaxWidth()) {
                         OutlinedTextField(
                             value = selectedMedicine?.name ?: customMedName,
                             onValueChange = {
@@ -245,16 +246,20 @@ fun AddScheduleDialog(
                                 selectedMedicine = null
                             },
                             label = { Text(text = stringResource(id = R.string.field_name_label)) },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedMedMenu) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .menuAnchor(),
+                            trailingIcon = {
+                                IconButton(onClick = { expandedDropdown = !expandedDropdown }) {
+                                    Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = null)
+                                }
+                            },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp)
                         )
 
-                        ExposedDropdownMenu(
-                            expanded = expandedMedMenu,
-                            onDismissRequest = { expandedMedMenu = false }
+                        DropdownMenu(
+                            expanded = expandedDropdown,
+                            onDismissRequest = { expandedDropdown = false },
+                            modifier = Modifier.fillMaxWidth()
                         ) {
                             medicines.forEach { med ->
                                 DropdownMenuItem(
@@ -262,7 +267,8 @@ fun AddScheduleDialog(
                                     onClick = {
                                         selectedMedicine = med
                                         dosage = med.dosage ?: ""
-                                        expandedMedMenu = false
+                                        customMedName = ""
+                                        expandedDropdown = false
                                     }
                                 )
                             }
@@ -274,19 +280,22 @@ fun AddScheduleDialog(
                         onValueChange = { customMedName = it },
                         label = { Text(text = stringResource(id = R.string.field_name_label)) },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
                     )
                 }
 
+                // Dosage
                 OutlinedTextField(
                     value = dosage,
                     onValueChange = { dosage = it },
                     label = { Text(text = stringResource(id = R.string.field_dosage_label)) },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
                 )
 
-                // Time picker fields
+                // Hour & Minute Inputs
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -300,7 +309,8 @@ fun AddScheduleDialog(
                         },
                         label = { Text(text = "Часы (0-23)") },
                         singleLine = true,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
                     )
 
                     OutlinedTextField(
@@ -312,10 +322,12 @@ fun AddScheduleDialog(
                         },
                         label = { Text(text = "Минуты (0-59)") },
                         singleLine = true,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
                     )
                 }
 
+                // Loud Alarm Switch
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -338,12 +350,12 @@ fun AddScheduleDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    if (medName.isNotBlank()) {
+                    if (isSaveEnabled) {
                         val h = (hourText.toIntOrNull() ?: 8).coerceIn(0, 23)
                         val m = (minuteText.toIntOrNull() ?: 0).coerceIn(0, 59)
                         val schedule = ScheduleEntity(
                             medicineId = selectedMedicine?.id ?: 0L,
-                            medicineName = medName,
+                            medicineName = finalMedName,
                             dosage = dosage.ifBlank { null },
                             timeHour = h,
                             timeMinute = m,
@@ -354,7 +366,8 @@ fun AddScheduleDialog(
                         )
                         onSave(schedule)
                     }
-                }
+                },
+                enabled = isSaveEnabled
             ) {
                 Text(text = stringResource(id = R.string.btn_save))
             }
