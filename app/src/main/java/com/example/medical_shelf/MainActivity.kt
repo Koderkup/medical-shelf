@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
@@ -109,9 +110,11 @@ fun MainAppScreen() {
                 val medId = backStackEntry.arguments?.getLong("medId")
                 val boxId = backStackEntry.arguments?.getLong("boxId")
 
-                val scannedBarcodeName = backStackEntry.savedStateHandle.get<String>("scanned_name")
-                    ?: backStackEntry.savedStateHandle.get<String>("scanned_barcode")
-                val scannedDate = backStackEntry.savedStateHandle.get<String>("scanned_date")
+                val scannedName by backStackEntry.savedStateHandle.getStateFlow<String?>("scanned_name", null).collectAsState()
+                val scannedBarcode by backStackEntry.savedStateHandle.getStateFlow<String?>("scanned_barcode", null).collectAsState()
+                val scannedDate by backStackEntry.savedStateHandle.getStateFlow<String?>("scanned_date", null).collectAsState()
+
+                val scannedBarcodeName = scannedName ?: scannedBarcode
 
                 AddEditMedicineScreen(
                     medicineId = if (medId != null && medId > 0) medId else null,

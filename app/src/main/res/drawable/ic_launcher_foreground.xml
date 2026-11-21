@@ -6,28 +6,27 @@
 
     <!-- Outer pill shadow/base -->
     <path
-        android:fillColor="#ECEFF1"
-        android:pathData="M54,24C37.43,24 24,37.43 24,54C24,70.57 37.43,84 54,84C70.57,84 84,70.57 84,54C84,37.43 70.57,24 54,24Z"/>
+        android:fillColor="#10000000"
+        android:pathData="M54,25C38,25 25,38 25,54C25,70 38,83 54,83C70,83 83,70 83,54C83,38 70,25 54,25Z"/>
 
-    <!-- White round pill tablet body -->
+    <!-- Pure white round pill tablet body -->
     <path
         android:fillColor="#FFFFFF"
         android:pathData="M54,26C38.54,26 26,38.54 26,54C26,69.46 38.54,82 54,82C69.46,82 82,69.46 82,54C82,38.54 69.46,26 54,26Z"/>
 
-    <!-- Inner pill bevel / 3D shading edge -->
+    <!-- Subtle thin inner pill bevel edge (1dp thickness) -->
     <path
         android:fillColor="#E0F2F1"
-        android:pathData="M54,28C39.64,28 28,39.64 28,54C28,68.36 39.64,80 54,80C68.36,80 80,68.36 80,54C80,39.64 68.36,28 54,28ZM54,76C41.85,76 32,66.15 32,54C32,41.85 41.85,32 54,32C66.15,32 76,41.85 76,54C76,66.15 66.15,76 54,76Z"/>
+        android:pathData="M54,28C39.64,28 28,39.64 28,54C28,68.36 39.64,80 54,80C68.36,80 80,68.36 80,54C80,39.64 68.36,28 54,28ZM54,78.5C40.47,78.5 29.5,67.53 29.5,54C29.5,40.47 40.47,29.5 54,29.5C67.53,29.5 78.5,40.47 78.5,54C78.5,67.53 67.53,78.5 54,78.5Z"/>
 
-    <!-- Pill score line (groove down the middle for splitting in half) -->
+    <!-- Thin score line / groove down the middle (1.5dp width) -->
     <path
-        android:fillColor="#B2DFDB"
-        android:pathData="M52.5,28H55.5V80H52.5Z"/>
+        android:fillColor="#80CBC4"
+        android:pathData="M53.25,28.5H54.75V79.5H53.25Z"/>
 
-    <!-- Red Medical Cross badge in the center -->
-    <!-- Horizontal & Vertical Red Cross bars -->
+    <!-- Bright Red Medical Cross badge in the center -->
     <path
         android:fillColor="#E53935"
-        android:pathData="M49,41H59V49H67V59H59V67H49V59H41V49H49V41Z"/>
+        android:pathData="M49,42H59V49H66V59H59V66H49V59H42V49H49V42Z"/>
 
 </vector>

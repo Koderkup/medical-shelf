@@ -149,29 +149,33 @@ fun AddEditMedicineScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Scanner Launch Card
+            // Scanner Launch Buttons (Equal Height 52.dp)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 OutlinedButton(
                     onClick = { onNavigateToScanner("barcode") },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(52.dp),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Icon(imageVector = Icons.Default.QrCodeScanner, contentDescription = null)
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = stringResource(id = R.string.scanner_mode_barcode))
+                    Text(text = stringResource(id = R.string.scanner_mode_barcode), fontSize = 13.sp)
                 }
 
                 OutlinedButton(
                     onClick = { onNavigateToScanner("ocr") },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(52.dp),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Icon(imageVector = Icons.Default.CameraAlt, contentDescription = null)
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = stringResource(id = R.string.scanner_mode_ocr))
+                    Text(text = stringResource(id = R.string.scanner_mode_ocr), fontSize = 13.sp)
                 }
             }
 

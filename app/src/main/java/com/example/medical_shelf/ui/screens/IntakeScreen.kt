@@ -41,7 +41,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -213,8 +212,8 @@ fun AddScheduleDialog(
     var selectedMedicine by remember { mutableStateOf<MedicineEntity?>(medicines.firstOrNull()) }
     var customMedName by remember { mutableStateOf("") }
     var dosage by remember { mutableStateOf("") }
-    var hour by remember { mutableIntStateOf(8) }
-    var minute by remember { mutableIntStateOf(0) }
+    var hourText by remember { mutableStateOf("08") }
+    var minuteText by remember { mutableStateOf("00") }
     var isLoudAlarm by remember { mutableStateOf(true) }
     var expandedMedMenu by remember { mutableStateOf(false) }
 
@@ -225,7 +224,7 @@ fun AddScheduleDialog(
         title = { Text(text = stringResource(id = R.string.notification_alarm_title, "")) },
         text = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 if (medicines.isNotEmpty()) {
                     ExposedDropdownMenuBox(
@@ -280,20 +279,28 @@ fun AddScheduleDialog(
                 // Time picker fields
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     OutlinedTextField(
-                        value = hour.toString(),
-                        onValueChange = { hour = (it.toIntOrNull() ?: 8).coerceIn(0, 23) },
-                        label = { Text(text = "Ч") },
+                        value = hourText,
+                        onValueChange = { input ->
+                            if (input.length <= 2 && input.all { it.isDigit() }) {
+                                hourText = input
+                            }
+                        },
+                        label = { Text(text = "Часы (0-23)") },
                         singleLine = true,
                         modifier = Modifier.weight(1f)
                     )
 
                     OutlinedTextField(
-                        value = minute.toString(),
-                        onValueChange = { minute = (it.toIntOrNull() ?: 0).coerceIn(0, 59) },
-                        label = { Text(text = "М") },
+                        value = minuteText,
+                        onValueChange = { input ->
+                            if (input.length <= 2 && input.all { it.isDigit() }) {
+                                minuteText = input
+                            }
+                        },
+                        label = { Text(text = "Минуты (0-59)") },
                         singleLine = true,
                         modifier = Modifier.weight(1f)
                     )
@@ -304,7 +311,13 @@ fun AddScheduleDialog(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = stringResource(id = R.string.alarm_loud_option), fontSize = 14.sp)
+                    Text(
+                        text = stringResource(id = R.string.alarm_loud_option),
+                        fontSize = 14.sp,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = 8.dp)
+                    )
                     Switch(
                         checked = isLoudAlarm,
                         onCheckedChange = { isLoudAlarm = it }
@@ -316,13 +329,15 @@ fun AddScheduleDialog(
             Button(
                 onClick = {
                     if (medName.isNotBlank()) {
+                        val h = (hourText.toIntOrNull() ?: 8).coerceIn(0, 23)
+                        val m = (minuteText.toIntOrNull() ?: 0).coerceIn(0, 59)
                         val schedule = ScheduleEntity(
                             medicineId = selectedMedicine?.id ?: 0L,
                             medicineName = medName,
                             dosage = dosage.ifBlank { null },
-                            timeHour = hour,
-                            timeMinute = minute,
-                            section = IntakeTimeSection.fromHour(hour),
+                            timeHour = h,
+                            timeMinute = m,
+                            section = IntakeTimeSection.fromHour(h),
                             scheduleType = ScheduleType.DAILY,
                             isLoudAlarm = isLoudAlarm,
                             isEnabled = true
