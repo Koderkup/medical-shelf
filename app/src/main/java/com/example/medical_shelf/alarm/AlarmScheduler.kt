@@ -51,7 +51,7 @@ class AlarmScheduler(private val context: Context) {
         )
 
         val alarmClockInfo = AlarmManager.AlarmClockInfo(triggerTime, showPendingIntent)
-        
+
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 if (alarmManager.canScheduleExactAlarms()) {
@@ -62,24 +62,35 @@ class AlarmScheduler(private val context: Context) {
             } else {
                 alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
             }
+        } catch (e: SecurityException) {
+            e.printStackTrace()
+            try {
+                alarmManager.set(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
     fun cancelAlarm(scheduleId: Long) {
-        val intent = Intent(context, AlarmReceiver::class.java).apply {
-            action = AlarmReceiver.ACTION_INTAKE_ALARM
-        }
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            scheduleId.toInt(),
-            intent,
-            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
-        )
-        if (pendingIntent != null) {
-            alarmManager.cancel(pendingIntent)
-            pendingIntent.cancel()
+        try {
+            val intent = Intent(context, AlarmReceiver::class.java).apply {
+                action = AlarmReceiver.ACTION_INTAKE_ALARM
+            }
+            val pendingIntent = PendingIntent.getBroadcast(
+                context,
+                scheduleId.toInt(),
+                intent,
+                PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+            )
+            if (pendingIntent != null) {
+                alarmManager.cancel(pendingIntent)
+                pendingIntent.cancel()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
@@ -105,10 +116,15 @@ class AlarmScheduler(private val context: Context) {
             alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
         } catch (e: Exception) {
             e.printStackTrace()
+            try {
+                alarmManager.set(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+            }
         }
     }
 
-    private fun calculateNextTriggerTime(schedule: ScheduleEntity): Long? {
+    private fun calculateNextTriggerTime(schedule: ScheduleEntity): Long {
         val now = Calendar.getInstance()
         val target = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, schedule.timeHour)
@@ -145,8 +161,6 @@ class AlarmScheduler(private val context: Context) {
     }
 
     private fun isCalendarDayInList(calendar: Calendar, daysList: List<Int>): Boolean {
-        // Calendar.DAY_OF_WEEK: Sun=1, Mon=2, Tue=3, Wed=4, Thu=5, Fri=6, Sat=7
-        // Our schedule format: Mon=1, Tue=2, Wed=3, Thu=4, Fri=5, Sat=6, Sun=7
         val dayOfWeek = when (calendar.get(Calendar.DAY_OF_WEEK)) {
             Calendar.MONDAY -> 1
             Calendar.TUESDAY -> 2

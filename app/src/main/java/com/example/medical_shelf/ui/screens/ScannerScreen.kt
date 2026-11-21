@@ -2,7 +2,6 @@ package com.example.medical_shelf.ui.screens
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -10,21 +9,16 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -95,6 +89,14 @@ fun ScannerScreen(
     LaunchedEffect(Unit) {
         if (!hasCameraPermission) {
             permissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
+
+    val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            cameraExecutor.shutdown()
         }
     }
 
@@ -175,18 +177,18 @@ fun ScannerScreen(
                 ) {
                     AndroidView(
                         factory = { ctx ->
-                            val previewView = PreviewView(ctx)
-                            val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
-                            val cameraExecutor = Executors.newSingleThreadExecutor()
-
+                            PreviewView(ctx)
+                        },
+                        update = { previewView ->
+                            val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
                             cameraProviderFuture.addListener({
                                 val cameraProvider = cameraProviderFuture.get()
                                 val preview = Preview.Builder().build().also {
                                     it.setSurfaceProvider(previewView.surfaceProvider)
                                 }
 
-                                val analyzer = if (scanMode == ScanMode.BARCODE) {
-                                    BarcodeAnalyzer(ctx) { barcode, name ->
+                                val analyzer: ImageAnalysis.Analyzer = if (scanMode == ScanMode.BARCODE) {
+                                    BarcodeAnalyzer(context) { barcode, name ->
                                         scope.launch {
                                             if (!isPro) {
                                                 val left = prefs.decrementFreeScan()
@@ -231,9 +233,7 @@ fun ScannerScreen(
                                 } catch (e: Exception) {
                                     e.printStackTrace()
                                 }
-                            }, ContextCompat.getMainExecutor(ctx))
-
-                            previewView
+                            }, ContextCompat.getMainExecutor(context))
                         },
                         modifier = Modifier.fillMaxSize()
                     )

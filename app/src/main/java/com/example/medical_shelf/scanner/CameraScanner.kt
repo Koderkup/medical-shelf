@@ -16,6 +16,7 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.InputStreamReader
 import java.util.regex.Pattern
 
@@ -32,12 +33,13 @@ class BarcodeAnalyzer(
     private val scanner = BarcodeScanning.getClient()
     private val db = AppDatabase.getDatabase(context)
     private var isProcessing = false
+    private var hasFoundResult = false
     private val assetsDict: Map<String, String> by lazy { loadAssetsDict(context) }
 
     @OptIn(ExperimentalGetImage::class)
     override fun analyze(imageProxy: ImageProxy) {
         val mediaImage = imageProxy.image
-        if (mediaImage == null || isProcessing) {
+        if (mediaImage == null || isProcessing || hasFoundResult) {
             imageProxy.close()
             return
         }
@@ -47,15 +49,18 @@ class BarcodeAnalyzer(
 
         scanner.process(inputImage)
             .addOnSuccessListener { barcodes ->
-                if (barcodes.isNotEmpty()) {
+                if (barcodes.isNotEmpty() && !hasFoundResult) {
                     val rawValue = barcodes[0].rawValue ?: barcodes[0].displayValue
                     if (!rawValue.isNullOrBlank()) {
+                        hasFoundResult = true
                         val parsedBarcode = extractBarcodeNumber(rawValue, barcodes[0].format)
-                        
+
                         CoroutineScope(Dispatchers.IO).launch {
                             val cachedName = db.userBarcodeCacheDao().findNameByBarcode(parsedBarcode)
                             val name = cachedName ?: assetsDict[parsedBarcode]
-                            onResult(parsedBarcode, name)
+                            withContext(Dispatchers.Main) {
+                                onResult(parsedBarcode, name)
+                            }
                         }
                     }
                 }
@@ -94,6 +99,7 @@ class ExpirationDateOcrAnalyzer(
 
     private val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
     private var isProcessing = false
+    private var hasFoundResult = false
 
     private val datePatterns = listOf(
         Pattern.compile("""\b(0[1-9]|1[0-2])[./](20\d{2})\b"""), // MM.YYYY or MM/YYYY
@@ -104,7 +110,7 @@ class ExpirationDateOcrAnalyzer(
     @OptIn(ExperimentalGetImage::class)
     override fun analyze(imageProxy: ImageProxy) {
         val mediaImage = imageProxy.image
-        if (mediaImage == null || isProcessing) {
+        if (mediaImage == null || isProcessing || hasFoundResult) {
             imageProxy.close()
             return
         }
@@ -114,11 +120,16 @@ class ExpirationDateOcrAnalyzer(
 
         recognizer.process(inputImage)
             .addOnSuccessListener { textResult ->
-                val fullText = textResult.text
-                if (fullText.isNotBlank()) {
-                    val extractedDate = findDateInText(fullText)
-                    if (extractedDate != null) {
-                        onDateFound(extractedDate)
+                if (!hasFoundResult) {
+                    val fullText = textResult.text
+                    if (fullText.isNotBlank()) {
+                        val extractedDate = findDateInText(fullText)
+                        if (extractedDate != null) {
+                            hasFoundResult = true
+                            CoroutineScope(Dispatchers.Main).launch {
+                                onDateFound(extractedDate)
+                            }
+                        }
                     }
                 }
             }
@@ -145,10 +156,8 @@ class ExpirationDateOcrAnalyzer(
         val clean = rawDate.replace('/', '.').replace('-', '.')
         val parts = clean.split('.')
         return if (parts.size == 2 && parts[0].length == 2 && parts[1].length == 4) {
-            // MM.YYYY -> MM.YYYY
             clean
         } else if (parts.size == 3 && parts[0].length == 2 && parts[1].length == 2) {
-            // DD.MM.YYYY -> MM.YYYY
             "${parts[1]}.${parts[2]}"
         } else {
             clean
