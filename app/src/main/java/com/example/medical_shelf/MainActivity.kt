@@ -145,7 +145,7 @@ fun MainAppScreen() {
                 ScannerScreen(
                     initialMode = mode,
                     onOpenPaywall = { navController.navigate(Screen.Paywall.route) },
-                    onResultFound = { barcode, name, date ->
+                    onResultFound = { _, _, _ ->
                         navController.popBackStack()
                     }
                 )
